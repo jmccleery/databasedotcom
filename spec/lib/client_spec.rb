@@ -65,6 +65,8 @@ describe Databasedotcom::Client do
         client.version.should == '88'
         client.ca_file.should == "other/ca/file.cert"
         client.verify_mode.should == 1
+        client.username.should == "username@test.com"
+        client.password.should == "password"
       end
     end
 
@@ -824,7 +826,7 @@ describe Databasedotcom::Client do
               @client.create(MySobjects::Whizbang, "Date_Field" => Date.civil(2011, 1, 1), "DateTime_Field" => DateTime.civil(2011, 2, 1, 12), "Picklist_Multiselect_Field" => %w(a b))
               WebMock.should have_requested(:post, "https://na1.salesforce.com/services/data/v23.0/sobjects/Whizbang").with(:body => {"Date_Field" => "2011-01-01", "DateTime_Field" => "2011-02-01T12:00:00.000+0000", "Picklist_Multiselect_Field" => "a;b"})
             end
-            
+
             it "does not apply coercion to String value in a 'date' field" do
               @client.create(MySobjects::Whizbang, "Date_Field" => "2011-01-01")
               WebMock.should have_requested(:post, "https://na1.salesforce.com/services/data/v23.0/sobjects/Whizbang").with(:body => %|{"Date_Field":"2011-01-01"}|)
