@@ -14,7 +14,13 @@ module Databasedotcom
       def initialize(attrs = {})
         super()
         self.class.description["fields"].each do |field|
-          self.send("#{field["name"]}=", field["defaultValueFormula"])
+          if field['type'] =~ /(picklist|multipicklist)/ && picklist_option = field['picklistValues'].find { |p| p['defaultValue'] }
+            self.send("#{field["name"]}=", picklist_option["value"])
+          elsif field['type'] =~ /boolean/
+            self.send("#{field["name"]}=", field["defaultValue"])
+          else
+            self.send("#{field["name"]}=", field["defaultValueFormula"])
+          end
         end
         self.attributes=(attrs)
       end
@@ -22,7 +28,7 @@ module Databasedotcom
       # Returns a hash representing the state of this object
       def attributes
         self.class.attributes.inject({}) do |hash, attr|
-          hash[attr] = self.send(attr.to_sym)
+          hash[attr] = self.send(attr.to_sym) if self.respond_to?(attr.to_sym)
           hash
         end
       end
@@ -314,6 +320,7 @@ module Databasedotcom
             when "boolean"
               params[attr] = value.is_a?(String) ? value.to_i != 0 : value
             when "currency", "percent", "double"
+              value = value.gsub(/[^-0-9.0-9]/, '').to_f if value.respond_to?(:gsub)
               params[attr] = value.to_f
             when "date"
               params[attr] = Date.parse(value) rescue Date.today
